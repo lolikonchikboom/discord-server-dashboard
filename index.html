@@ -31,6 +31,80 @@ dialog{background:var(--p);color:var(--tx);border:1px solid var(--bd);border-rad
 #toast{position:fixed;bottom:20px;right:20px;background:var(--g);padding:10px 16px;border-radius:10px;display:none;z-index:9}
 .login{display:grid;place-items:center;min-height:100vh;text-align:center}.login .card{max-width:380px;padding:32px}
 @media(max-width:760px){#app{flex-direction:column}aside{width:auto;height:auto;position:static;flex-direction:row;flex-wrap:wrap;align-items:center}nav{display:flex;flex-wrap:wrap}.me{margin:0 0 0 auto}main{padding:14px}}
+/* ===== Візуал і анімації ===== */
+:root{--ac2:#8b5cf6;--glow:0 0 0 3px #5865f244;--ease:cubic-bezier(.34,1.56,.64,1)}
+*{scrollbar-width:thin;scrollbar-color:#3a4152 transparent}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#3a4152;border-radius:9px}
+body{background:radial-gradient(1100px 560px at 8% -10%,#5865f226,transparent 60%),radial-gradient(900px 480px at 100% 0,#b36bff18,transparent 55%),var(--bg);background-attachment:fixed}
+@keyframes up{from{opacity:0;transform:translateY(14px)}}
+@keyframes pop{from{opacity:0;transform:scale(.92) translateY(10px)}}
+@keyframes fade{from{opacity:0}}
+@keyframes slide{from{opacity:0;transform:translateX(40px) scale(.95)}}
+@keyframes rip{to{transform:scale(4);opacity:0}}
+@keyframes float{50%{transform:translateY(-8px)}}
+:is(#main>*,.ev,.grid>.card,.mem>.card,.two>.card){animation:up .5s ease-out backwards}
+:is(#main>*,.ev,.grid>.card,.mem>.card,.two>.card):nth-child(2){animation-delay:.06s}
+:is(#main>*,.ev,.grid>.card,.mem>.card,.two>.card):nth-child(3){animation-delay:.12s}
+:is(#main>*,.ev,.grid>.card,.mem>.card,.two>.card):nth-child(4){animation-delay:.18s}
+:is(#main>*,.ev,.grid>.card,.mem>.card,.two>.card):nth-child(5){animation-delay:.24s}
+:is(#main>*,.ev,.grid>.card,.mem>.card,.two>.card):nth-child(6){animation-delay:.3s}
+:is(#main>*,.ev,.grid>.card,.mem>.card,.two>.card):nth-child(n+7){animation-delay:.36s}
+
+button{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--ac),var(--ac2));border-radius:10px;padding:9px 18px;letter-spacing:.2px;box-shadow:0 4px 14px #5865f240;transition:transform .2s var(--ease),box-shadow .25s,border-color .25s,background .25s}
+button:hover{transform:translateY(-2px);box-shadow:0 10px 24px #5865f266;filter:none}
+button:active{transform:translateY(0) scale(.96);box-shadow:0 2px 8px #5865f240}
+button:focus-visible{outline:0;box-shadow:var(--glow),0 4px 14px #5865f240}
+button.s{background:var(--p2);border:1px solid var(--bd);box-shadow:none}
+button.s:hover{border-color:var(--ac);background:#252a36;box-shadow:0 8px 20px #0006}
+button.d{background:linear-gradient(135deg,#ed4245,#d6336c);box-shadow:0 4px 14px #ed424540}
+button.d:hover{box-shadow:0 10px 24px #ed424566}
+.rip{position:absolute;border-radius:50%;background:#fff5;transform:scale(0);animation:rip .65s ease-out;pointer-events:none}
+
+nav button{background:none;box-shadow:none;border-radius:10px;padding:10px 14px;color:var(--mu);transition:transform .25s var(--ease),background .25s,color .25s,box-shadow .25s}
+nav button:hover{background:#ffffff0d;color:var(--tx);transform:translateX(5px);box-shadow:none}
+nav button:active{transform:translateX(2px) scale(.98)}
+nav button.on{background:linear-gradient(90deg,#5865f238,transparent);color:#fff;box-shadow:inset 3px 0 0 var(--ac)}
+aside h2 img{transition:transform .6s var(--ease)}aside h2:hover img{transform:rotate(360deg) scale(1.1)}
+.me img{transition:transform .3s var(--ease);box-shadow:0 0 0 2px var(--ac)}.me img:hover{transform:scale(1.12)}
+
+input,select,textarea{border-radius:10px;transition:border-color .2s,box-shadow .25s,background-color .25s}
+input:hover,select:hover,textarea:hover{border-color:#3d4557}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac);box-shadow:var(--glow);background-color:#232836}
+select:not([multiple]){appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:36px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238b93a7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center}
+select[multiple]{padding:6px}select[multiple] option{padding:7px 10px;border-radius:7px;margin:1px 0;transition:background .15s}
+select[multiple] option:hover{background:#ffffff10}
+select[multiple] option:checked{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff}
+select option{background:#1e222b;color:var(--tx)}
+label{cursor:pointer}
+
+input[type=checkbox]{appearance:none;-webkit-appearance:none;width:44px!important;height:24px;padding:0;margin:0;border-radius:99px;background:#2a2f3b;border:1px solid var(--bd);position:relative;cursor:pointer;flex:none;transition:background .3s,border-color .3s,box-shadow .3s}
+input[type=checkbox]::before{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#aab1c5;box-shadow:0 2px 6px #0005;transition:transform .35s var(--ease),background .25s}
+input[type=checkbox]:hover{border-color:var(--ac)}
+input[type=checkbox]:checked{background:linear-gradient(135deg,var(--ac),var(--ac2));border-color:transparent;box-shadow:0 0 16px #5865f288}
+input[type=checkbox]:checked::before{transform:translateX(20px);background:#fff}
+input[type=checkbox]:active::before{width:22px}
+input[type=checkbox]:checked:active::before{transform:translateX(16px)}
+
+.card{transition:transform .3s var(--ease),border-color .25s,box-shadow .3s}
+.card:hover{border-color:#353c4d}
+.two>.card:hover{box-shadow:0 12px 32px #0006}
+.mem .card:hover{transform:translateY(-5px);border-color:var(--ac);box-shadow:0 14px 30px #0008,0 0 22px #5865f233}
+.mem .card:active{transform:translateY(-1px) scale(.98)}
+.mem .card .av{transition:transform .35s var(--ease)}.mem .card:hover .av{transform:scale(1.1) rotate(-4deg)}
+.grid .card b{background:linear-gradient(135deg,#fff,#a5adff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.grid .card:hover{transform:translateY(-4px)}
+.ev{transition:background .25s,padding-left .25s}.ev:hover{background:#ffffff08;padding-left:18px}
+.ev .av{transition:transform .35s var(--ease)}.ev:hover .av{transform:scale(1.1) rotate(-4deg)}
+.ev .h a{transition:color .2s}.ev .h a:hover{color:var(--ac)}
+.chip{transition:transform .2s var(--ease),border-color .2s,background .2s}.chip:hover{transform:translateY(-2px);background:#ffffff0d}
+.bg{transition:transform .2s var(--ease)}.ev:hover .bg{transform:scale(1.06)}
+a{transition:opacity .2s}a:hover{opacity:.8}
+
+dialog[open]{animation:pop .35s var(--ease)}dialog::backdrop{backdrop-filter:blur(5px);animation:fade .3s}
+#toast{animation:slide .4s var(--ease);box-shadow:0 12px 30px #0008;border-radius:12px;font-weight:600}
+.login .card{animation:pop .7s var(--ease);box-shadow:0 20px 60px #0008,0 0 60px #5865f233}
+.login .card h2{animation:float 4s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -143,6 +217,8 @@ try{me=await api('/api/me')}catch(e){root.innerHTML=`<div class=login><div class
 const s=await api('/api/stats');[CH,RL]=await Promise.all([api('/api/channels'),api('/api/roles')]);
 root.innerHTML=`<div id=app><aside><h2>${s.guild.icon?`<img src="${esc(s.guild.icon)}" alt="">`:''}${esc(s.guild.name)}</h2><nav>${[['overview','Огляд'],['log','Журнал'],['members','Учасники'],['spam','Антиспам'],['control','Керування'],['settings','Налаштування']].map(([k,l])=>`<button data-v=${k}>${l}</button>`).join('')}</nav><div class=me><img src="${esc(me.avatar||'')}" alt=""><div><b>${esc(me.name)}</b><br><a href="#" onclick="logout();return false">Вийти</a></div></div></aside><main id=main></main></div>`;
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.v));go('overview')}
+document.addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(!b)return;const r=b.getBoundingClientRect(),s=Math.max(r.width,r.height),x=document.createElement('span');x.className='rip';x.style.cssText='width:'+s+'px;height:'+s+'px;left:'+(e.clientX-r.left-s/2)+'px;top:'+(e.clientY-r.top-s/2)+'px';b.appendChild(x);setTimeout(()=>x.remove(),650)});
+new MutationObserver(()=>document.querySelectorAll('.grid .card b:not([data-c])').forEach(b=>{b.dataset.c=1;const t=+b.textContent;if(!(t>0))return;const s=performance.now();(function f(n){const p=Math.min((n-s)/900,1);b.textContent=Math.round(t*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f)})(s)})).observe(document.body,{childList:true,subtree:true});
 start();
 </script>
 </body>
