@@ -104,6 +104,29 @@ dialog[open]{animation:pop .35s var(--ease)}dialog::backdrop{backdrop-filter:blu
 #toast{animation:slide .4s var(--ease);box-shadow:0 12px 30px #0008;border-radius:12px;font-weight:600}
 .login .card{animation:pop .7s var(--ease);box-shadow:0 20px 60px #0008,0 0 60px #5865f233}
 .login .card h2{animation:float 4s ease-in-out infinite}
+:root{color-scheme:dark}
+label:has(input[type=checkbox]){padding:6px 8px;margin:0 -8px;border-radius:10px;transition:background .2s}
+label:has(input[type=checkbox]):hover{background:#ffffff0a}
+.dd{position:relative;flex:1 1 140px;min-width:0}.dd>input{width:100%}
+.dd .dt{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;padding:9px 12px;background:var(--p2);border:1px solid var(--bd);border-radius:10px;cursor:pointer;user-select:none;transition:border-color .2s,box-shadow .25s,background .25s}
+.dd .dt:hover{border-color:#3d4557;background:#232836}
+.dd.open .dt,.dd .dt:focus-visible{outline:0;border-color:var(--ac);box-shadow:var(--glow)}
+.dd .dt span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dd .dt.mu span{color:var(--mu)}
+.dd .dt svg{flex:none;transition:transform .35s var(--ease)}.dd.open .dt svg{transform:rotate(180deg)}
+.dd .pn{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:40;display:none;padding:6px;background:#1a1e27;border:1px solid #333a4a;border-radius:14px;box-shadow:0 20px 50px #000b,0 0 0 1px #5865f222;transform-origin:top center}
+.dd.open .pn{display:block;animation:ddin .25s var(--ease)}
+@keyframes ddin{from{opacity:0;transform:translateY(-10px) scale(.96)}}
+.dd .pn>input{width:100%;margin-bottom:6px}
+.dd .ol{max-height:260px;overflow:auto;padding-right:2px}
+.dd .op{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;cursor:pointer;transition:background .15s,padding-left .2s}
+.dd .op:hover{background:#ffffff12;padding-left:15px}
+.dd .op.on{background:linear-gradient(135deg,#5865f245,#8b5cf630);color:#fff}
+.dd .op span{overflow:hidden;text-overflow:ellipsis}
+.dd .op .ck{width:18px;height:18px;border-radius:6px;border:2px solid #4a5163;flex:none;display:grid;place-items:center;transition:background .2s,border-color .2s}
+.dd .op.on .ck{background:linear-gradient(135deg,var(--ac),var(--ac2));border-color:transparent}
+.dd .op .ck::after{content:"";width:5px;height:9px;margin-top:-2px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) scale(0);transition:transform .3s var(--ease)}
+.dd .op.on .ck::after{transform:rotate(45deg) scale(1)}
+.dd .emp{padding:12px;color:var(--mu)}
 @media(prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -149,7 +172,8 @@ const d=await api('/api/events?'+q);if(!more)box.innerHTML='';box.insertAdjacent
 document.addEventListener('click',e=>{const a=e.target.closest('[data-uid]');if(a&&a.dataset.uid)profile(a.dataset.uid)});
 
 const picker=id=>`<input id=${id} list=${id}L placeholder="Користувач (ім’я або ID)" autocomplete=off><datalist id=${id}L></datalist>`;
-function bindPicker(id){const i=$('#'+id),l=$('#'+id+'L');let t;i.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(async()=>{if(i.value.length<2||i.value.includes('·'))return;try{const m=await api('/api/members?q='+encodeURIComponent(i.value));l.innerHTML=m.map(x=>`<option value="${esc(x.name)} · ${x.id}">`).join('')}catch{}},300)})}
+function bindPicker(id){const i=$('#'+id),l=$('#'+id+'L');l&&l.remove();i.removeAttribute('list');const w=document.createElement('div');w.className='dd';i.before(w);w.appendChild(i);const pn=document.createElement('div');pn.className='pn';pn.innerHTML='<div class=ol></div>';w.appendChild(pn);const ol=pn.firstChild;let t;
+i.addEventListener('input',()=>{clearTimeout(t);if(i.value.length<2||i.value.includes('·')){w.classList.remove('open');return}t=setTimeout(async()=>{try{const m=await api('/api/members?q='+encodeURIComponent(i.value));ol.innerHTML=m.length?'':'<div class=emp>Нікого не знайдено</div>';m.forEach(x=>{const d=document.createElement('div');d.className='op';d.innerHTML='<img class=av style="width:30px;height:30px" src="'+esc(x.avatar)+'" alt=""><span>'+esc(x.name)+' <small class=m>@'+esc(x.username)+'</small></span>';d.onclick=()=>{i.value=x.name+' · '+x.id;w.classList.remove('open')};ol.appendChild(d)});w.classList.add('open')}catch{}},300)})}
 const pid=id=>{const v=$('#'+id).value.trim();return v.includes('·')?v.split('·').pop().trim():(/^\d{15,}$/.test(v)?v:'')};
 const chOpts=(txt)=>CH.filter(c=>!txt||c.text).map(c=>`<option value="${c.id}">#${esc(c.name)}</option>`).join('');
 const main=h=>{$('#main').innerHTML=h};
@@ -215,10 +239,22 @@ async function start(){const root=$('#root');
 if(!token){root.innerHTML=`<div class=login><div class=card><h2>Панель керування сервером</h2><p class=m>Увійдіть через Discord. Доступ мають лише дозволені акаунти.</p><a href="${loginUrl()}"><button>Увійти через Discord</button></a></div></div>`;return}
 try{me=await api('/api/me')}catch(e){root.innerHTML=`<div class=login><div class=card><h2>Немає доступу</h2><p class=m>${esc(e.message)}</p><button onclick="logout()">Вийти</button></div></div>`;return}
 const s=await api('/api/stats');[CH,RL]=await Promise.all([api('/api/channels'),api('/api/roles')]);
-root.innerHTML=`<div id=app><aside><h2>${s.guild.icon?`<img src="${esc(s.guild.icon)}" alt="">`:''}${esc(s.guild.name)}</h2><nav>${[['overview','Огляд'],['log','Журнал'],['members','Учасники'],['spam','Антиспам'],['control','Керування'],['settings','Налаштування']].map(([k,l])=>`<button data-v=${k}>${l}</button>`).join('')}</nav><div class=me><img src="${esc(me.avatar||'')}" alt=""><div><b>${esc(me.name)}</b><br><a href="#" onclick="logout();return false">Вийти</a></div></div></aside><main id=main></main></div>`;
+root.innerHTML=`<div id=app><aside><h2>${s.guild.icon?`<img src="${esc(s.guild.icon)}" alt="">`:''}${esc(s.guild.name)}</h2><nav>${[['overview','Огляд'],['log','Журнал'],['members','Учасники'],['spam','Антиспам'],['control','Керування'],['settings','Налаштування']].map(([k,l])=>`<button data-v=${k}>${l}</button>`).join('')}</nav><div class=me><img src="${esc(me.avatar||'')}" alt=""><div><b>${esc(me.name)}</b><br><a href="#" onclick="logout();return false">Вийти</a> <span class=m style="font-size:11px">· v3</span></div></div></aside><main id=main></main></div>`;
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.v));go('overview')}
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(!b)return;const r=b.getBoundingClientRect(),s=Math.max(r.width,r.height),x=document.createElement('span');x.className='rip';x.style.cssText='width:'+s+'px;height:'+s+'px;left:'+(e.clientX-r.left-s/2)+'px;top:'+(e.clientY-r.top-s/2)+'px';b.appendChild(x);setTimeout(()=>x.remove(),650)});
 new MutationObserver(()=>document.querySelectorAll('.grid .card b:not([data-c])').forEach(b=>{b.dataset.c=1;const t=+b.textContent;if(!(t>0))return;const s=performance.now();(function f(n){const p=Math.min((n-s)/900,1);b.textContent=Math.round(t*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f)})(s)})).observe(document.body,{childList:true,subtree:true});
+function enhance(s){if(s.dataset.e)return;s.dataset.e=1;s.style.display='none';const multi=s.multiple,w=document.createElement('div');w.className='dd';s.after(w);w.appendChild(s);
+const dt=document.createElement('div');dt.className='dt';dt.tabIndex=0;dt.innerHTML='<span></span><svg width="12" height="8" viewBox="0 0 12 8"><path d="M1 1l5 5 5-5" fill="none" stroke="#8b93a7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const opts=[...s.options],pn=document.createElement('div');pn.className='pn';pn.innerHTML=(opts.length>7?'<input placeholder="Пошук…">':'')+'<div class=ol></div>';w.append(dt,pn);
+const ol=pn.querySelector('.ol'),inp=pn.querySelector('input'),lab=dt.firstChild;
+const text=()=>{const sel=opts.filter(o=>o.selected&&o.value);lab.textContent=multi?(sel.length?'Обрано: '+sel.length:'Нічого не обрано'):(opts.find(o=>o.selected)?.textContent||'—');dt.classList.toggle('mu',multi?!sel.length:!s.value)};
+const draw=()=>{const f=(inp?.value||'').toLowerCase(),list=opts.filter(o=>o.textContent.toLowerCase().includes(f));ol.innerHTML=list.length?'':'<div class=emp>Нічого не знайдено</div>';
+list.forEach(o=>{const d=document.createElement('div');d.className='op'+(o.selected?' on':'');d.innerHTML=(multi?'<i class=ck></i>':'')+'<span></span>';d.lastChild.textContent=o.textContent;
+d.onclick=()=>{if(multi){o.selected=!o.selected;d.classList.toggle('on',o.selected)}else{s.value=o.value;w.classList.remove('open')}text();s.dispatchEvent(new Event('change',{bubbles:true}))};ol.appendChild(d)})};
+dt.onclick=()=>{document.querySelectorAll('.dd.open').forEach(x=>x!==w&&x.classList.remove('open'));const o=w.classList.toggle('open');if(o){if(inp)inp.value='';draw();inp&&setTimeout(()=>inp.focus(),30)}};
+inp&&inp.addEventListener('input',draw);dt.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();dt.click()}if(e.key==='Escape')w.classList.remove('open')};text()}
+document.addEventListener('click',e=>{document.querySelectorAll('.dd.open').forEach(x=>{if(!x.contains(e.target))x.classList.remove('open')})});
+new MutationObserver(()=>document.querySelectorAll('select:not([data-e])').forEach(enhance)).observe(document.body,{childList:true,subtree:true});
 start();
 </script>
 </body>
