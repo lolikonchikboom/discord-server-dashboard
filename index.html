@@ -200,7 +200,7 @@ const main=h=>{$('#main').innerHTML=h};
 
 const V={
 async overview(){const s=await api('/api/stats');const c=(n,l)=>`<div class=card><b>${n}</b><span class=m>${l}</span></div>`;
-main(`<h1>Огляд</h1><div class=grid>${c(s.members,'Учасників')}${c(s.channels,'Каналів')}${c(s.roles,'Ролей')}${c(s.events24h,'Подій за 24 год')}${c(s.events,'Подій усього')}${c(s.violations,'Порушень')}</div>
+main(`<h1>Огляд</h1><div class=grid>${c(s.members,'Учасників')}${c(s.channels,'Каналів')}${c(s.roles,'Ролей')}${c(s.events24h,'Подій за 24 год')}${c(s.events,'Подій усього')}${c(s.violations,'Порушень')}${c(s.errors24h,'Помилок за 24 год')}</div>
 <div class=card style="margin-bottom:20px"><h3 style="margin-top:0">Активність за 24 год</h3>${s.byType24h.map(x=>`<span class=chip>${esc(tl(x.type)[0])}: <b>${x.c}</b></span>`).join('')||'<span class=m>Поки тихо</span>'}</div>
 <h3>Останні події</h3><div class=list id=lst></div>`);showEvents($('#lst'),{})},
 async log(){main(`<h1>Журнал подій</h1><form class=bar id=f><input name=q placeholder="Пошук у тексті"><select name=type><option value="">Усі типи</option>${Object.entries(T).map(([k,v])=>`<option value=${k}>${v[0]}</option>`).join('')}<option value="admin_*">Дії адмінів</option></select>${picker('u')}<select name=channel><option value="">Усі канали</option>${chOpts()}</select><input type=datetime-local name=from title="Від"><input type=datetime-local name=to title="До"><button>Шукати</button></form><div class=list id=lst></div><p><button class=s id=more>Показати ще</button></p>`);
@@ -247,6 +247,29 @@ g('sv').onclick=async()=>{const body={logChannelId:g('lc').value,debugAll:b('dba
 try{await api('/api/settings',body);toast('Збережено')}catch(e){toast(e.message,1)}};
 g('tl').onclick=()=>api('/api/actions/testLog',{}).then(()=>toast('Тест надіслано')).catch(e=>toast(e.message,1));
 g('tw').onclick=()=>api('/api/actions/testWelcome',{}).then(()=>toast('Тест вітання надіслано')).catch(e=>toast(e.message,1))},
+async errors(){const[cat,st]=await Promise.all([api('/api/errors/catalog'),api('/api/settings')]);
+const txt=CH.filter(c=>c.text);
+main(`<h1>Помилки бота</h1>
+<div class=card style="margin-bottom:14px"><h3 style="margin-top:0">Сповіщення про помилки</h3><span class=m>Бот описує кожну помилку (де сталося, чому, як виправити) і надсилає її в канал Discord. Якщо канал не обрано, використовується канал журналу з налаштувань.</span><div class=bar style="margin-top:8px"><select id=ec><option value="">Канал журналу</option>${txt.map(c=>`<option value=${c.id}${c.id===st.errorChannelId?' selected':''}>#${esc(c.name)}</option>`).join('')}</select><button id=esv>Зберегти</button><button class=s id=ete>Тестова помилка</button><button class=d id=ecl>Очистити журнал</button></div></div>
+<form class=bar id=ef><input name=q placeholder="Пошук у помилках"><select name=code><option value="">Усі типи</option>${cat.map(c=>`<option value=${c.id}>${esc(c.title)} (${esc(c.id)})</option>`).join('')}</select><button>Шукати</button></form>
+<div id=el></div><p><button class=s id=em>Показати ще</button></p>
+<details class=card style="margin-top:16px"><summary style="cursor:pointer;font-weight:600">Довідник усіх помилок (${cat.length})</summary><input id=cq placeholder="Пошук у довіднику" style="margin:12px 0;width:100%"><div id=cl></div></details>`);
+const erow=e=>{const cx=Object.entries(e.ctx||{}).map(([k,v])=>esc(k+': '+v)).join(' · ');
+return`<div class=card style="margin-bottom:12px;border-left:3px solid var(--r)"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b>${esc(e.title)}</b><span class="bg r">${esc(e.code)}</span>${e.count>1?'<span class="bg y">×'+e.count+'</span>':''}<span class=m>${new Date(e.ts).toLocaleString('uk-UA')} · ${esc(e.source)}</span></div>
+<div class=x style="margin:8px 0;word-break:break-word">${esc(e.message)}</div>
+<div style="background:#ffffff08;border-radius:10px;padding:10px 12px;line-height:1.6"><b>Чому:</b> ${esc(e.cause)}<br><b>Як виправити:</b> ${esc(e.fix)}</div>${cx?'<p class=m style="margin:8px 0 0">'+cx+'</p>':''}
+<details style="margin-top:8px"><summary class=m style="cursor:pointer">Технічні подробиці</summary><pre style="white-space:pre-wrap;font-size:12px;color:var(--mu);margin:8px 0 0">${esc(e.stack||'—')}</pre></details></div>`};
+let last=0;
+const load=async more=>{const q=new URLSearchParams({limit:20});for(const[k,v]of new FormData($('#ef')))if(v)q.set(k,v);if(more&&last)q.set('before',last);
+const d=await api('/api/errors?'+q);if(!more){$('#el').innerHTML='';last=0}
+$('#el').insertAdjacentHTML('beforeend',d.map(erow).join('')||(more?'':'<div class=card><span class=m>Помилок немає. Усе працює.</span></div>'));if(d.length)last=d[d.length-1].id};
+const drawCat=f=>{$('#cl').innerHTML=cat.filter(c=>!f||(c.id+c.title+c.cause+c.fix+c.group).toLowerCase().includes(f)).map(c=>`<div class=ev style="padding:12px 4px"><div class=t><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b>${esc(c.title)}</b><span class="bg b">${esc(c.id)}</span><span class=m>${esc(c.group)}</span></div><div class=x style="margin-top:6px"><b>Чому:</b> ${esc(c.cause)}\n<b>Як виправити:</b> ${esc(c.fix)}</div></div></div>`).join('')||'<p class=m>Нічого не знайдено</p>'};
+$('#ef').onsubmit=e=>{e.preventDefault();load(false).catch(x=>toast(x.message,1))};$('#em').onclick=()=>load(true).catch(x=>toast(x.message,1));
+$('#cq').oninput=e=>drawCat(e.target.value.toLowerCase());drawCat('');
+$('#esv').onclick=()=>api('/api/settings',{errorChannelId:$('#ec').value}).then(()=>toast('Збережено')).catch(x=>toast(x.message,1));
+$('#ete').onclick=()=>api('/api/actions/testError',{}).then(r=>{toast(r.info||'Готово');load(false)}).catch(x=>toast(x.message,1));
+$('#ecl').onclick=async()=>{if(await act('clearErrors',{},'Очистити весь журнал помилок?'))load(false)};
+load(false).catch(x=>toast(x.message,1))},
 async control(){main(`<h1>Панель керування ботом</h1><div class=two>
 <div class=card><h3>Написати від імені бота</h3><select id=sc>${chOpts(1)}</select><textarea id=st placeholder="Текст повідомлення"></textarea><button id=b1>Надіслати від імені бота</button></div>
 <div class=card><h3>Видалити повідомлення</h3><select id=dc>${chOpts(1)}</select><input id=dm placeholder="ID повідомлення"><button class=d id=b2>Видалити</button></div>
@@ -345,9 +368,9 @@ function go(v){document.querySelectorAll('nav button').forEach(b=>b.classList.to
 async function start(){const root=$('#root');
 if(!token){root.innerHTML=`<div class=login><div class=card><h2>Панель керування сервером</h2><p class=m>Увійдіть через Discord. Доступ мають лише дозволені акаунти.</p><a href="${loginUrl()}"><button>Увійти через Discord</button></a></div></div>`;return}
 try{me=await api('/api/me')}catch(e){root.innerHTML=`<div class=login><div class=card><h2>Немає доступу</h2><p class=m>${esc(e.message)}</p><button onclick="logout()">Вийти</button></div></div>`;return}
-const s=await api('/api/stats');[CH,RL]=await Promise.all([api('/api/channels'),api('/api/roles')]);
-root.innerHTML=`<div id=app><aside><h2>${s.guild.icon?`<img src="${esc(s.guild.icon)}" alt="">`:''}${esc(s.guild.name)}</h2><nav>${[['overview','Огляд'],['log','Журнал'],['members','Учасники'],['spam','Антиспам'],['control','Керування'],['settings','Налаштування']].map(([k,l])=>`<button data-v=${k}>${l}</button>`).join('')}</nav><div class=me><img src="${esc(me.avatar||'')}" alt=""><div><b>${esc(me.name)}</b><br><a href="#" onclick="logout();return false">Вийти</a> <span class=m style="font-size:11px">· v7</span></div></div></aside><main id=main></main></div>`;
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.v));go('overview')}
+let s,off=false;try{s=await api('/api/stats');[CH,RL]=await Promise.all([api('/api/channels'),api('/api/roles')])}catch(e){off=true;s={guild:{name:'Бот офлайн',icon:null},errors24h:0}}
+root.innerHTML=`<div id=app><aside><h2>${s.guild.icon?`<img src="${esc(s.guild.icon)}" alt="">`:''}${esc(s.guild.name)}</h2><nav>${[['overview','Огляд'],['log','Журнал'],['members','Учасники'],['spam','Антиспам'],['control','Керування'],['settings','Налаштування'],['errors','Помилки']].filter(x=>!off||x[0]==='errors').map(([k,l])=>`<button data-v=${k}>${l}${k==='errors'&&s.errors24h?'<span class="bg r" style="margin-left:8px">'+s.errors24h+'</span>':''}</button>`).join('')}</nav><div class=me><img src="${esc(me.avatar||'')}" alt=""><div><b>${esc(me.name)}</b><br><a href="#" onclick="logout();return false">Вийти</a> <span class=m style="font-size:11px">· v8</span></div></div></aside><main id=main></main></div>`;
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.v));go(off?'errors':'overview')}
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(!b)return;const r=b.getBoundingClientRect(),s=Math.max(r.width,r.height),x=document.createElement('span');x.className='rip';x.style.cssText='width:'+s+'px;height:'+s+'px;left:'+(e.clientX-r.left-s/2)+'px;top:'+(e.clientY-r.top-s/2)+'px';b.appendChild(x);setTimeout(()=>x.remove(),650)});
 new MutationObserver(()=>document.querySelectorAll('.grid .card b:not([data-c])').forEach(b=>{b.dataset.c=1;const t=+b.textContent;if(!(t>0))return;const s=performance.now();(function f(n){const p=Math.min((n-s)/900,1);b.textContent=Math.round(t*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f)})(s)})).observe(document.body,{childList:true,subtree:true});
 function enhance(s){if(s.dataset.e)return;s.dataset.e=1;s.style.display='none';const multi=s.multiple,w=document.createElement('div');w.className='dd';s.after(w);w.appendChild(s);
